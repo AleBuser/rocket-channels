@@ -6,6 +6,20 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+
+[lib]
+name = "local"
+path = "src/lib.rs"
+
+[[bin]] # Bin to run the HelloWorld gRPC server
+name = "author"
+path = "src/bin/author.rs"
+
+[[bin]] # Bin to run the HelloWorld gRPC client
+name = "subscriber"
+path = "src/bin/subscriber.rs"
+
+
 [dependencies]
 rocket = "0.4.4"
 channels_lite = { git= "https://github.com/AleBuser/iota-channels-lite"}
