@@ -23,6 +23,7 @@ path = "src/bin/subscriber.rs"
 [dependencies]
 rocket = "0.4.4"
 channels_lite = { git= "https://github.com/AleBuser/iota-channels-lite"}
+iota-lib-rs = "0.4.1"
 serde = "1.0.110"
 serde_derive = "1.0.110"
 serde_json = "1.0.53"

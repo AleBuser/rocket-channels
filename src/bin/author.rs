@@ -1,63 +1,111 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
+use iota_lib_rs::prelude::iota_client;
+
 #[macro_use] extern crate rocket;
 extern crate channels_lite;
 
 use rocket_contrib::{json::Json};
 use channels_lite::channels::channel_author::Channel;
 
-use local::types::response::Response;
+use local::types::{response::Response, tag::Tag};
 
 
 #[get("/add_subscriber/<subscribe_tag>")]
-fn add_subscriber(subscribe_tag: String) -> Json<Response> {
+fn add_subscriber(subscribe_tag: Tag) -> Json<Response> {
     let mut author: Channel = Channel::new("SOME9AUTHOR9SEED9SECRTE9A", "https://nodes.devnet.iota.org:443");
-    author.add_subscriber(subscribe_tag.clone());
-    Json(Response {
-        status: "OK",
-        message: subscribe_tag.clone(),
-    })
+    match author.add_subscriber(subscribe_tag.val.to_string()){
+        Ok(_) =>{
+            Json(Response {
+                status: "OK",
+                message: subscribe_tag.val.to_string().clone(),
+            })
+        },
+        Err(_e) =>{
+            Json(Response {
+                status: "Error",
+                message: "Not a valid Tag".to_string(),
+            })
+        },
+    }
+   
 }
 
 #[get("/remove_subscriber/<unsubscribe_tag>")]
-fn remove_subscriber(unsubscribe_tag: String) -> Json<Response> {
+fn remove_subscriber(unsubscribe_tag: Tag) -> Json<Response> {
     let mut author: Channel = Channel::new("SOME9AUTHOR9SEED9SECRTE9A", "https://nodes.devnet.iota.org:443");
-    author.remove_subscriber(unsubscribe_tag.clone());
-    Json(Response {
-        status: "OK",
-        message: unsubscribe_tag.clone(),
-    })
+    match author.remove_subscriber(unsubscribe_tag.val.to_string()){
+        Ok(_) =>{
+            Json(Response {
+                status: "OK",
+                message: unsubscribe_tag.val.to_string().clone(),
+            })
+        },
+        Err(_e) =>{
+            Json(Response {
+                status: "Error",
+                message: "Not a valid Tag".to_string(),
+            })
+        },
+    }
 }
 
-#[get("/write_public/<auth_key>/<public_message>")]
-fn write_public(auth_key:String, public_message: String) -> Json<Response> {
+#[get("/write_public/<public_message>")]
+fn write_public(public_message: Tag) -> Json<Response> {
     let mut author: Channel = Channel::new("SOME9AUTHOR9SEED9SECRTE9A", "https://nodes.devnet.iota.org:443");
 
-    author.write_signed(false, &public_message.clone(), "");
-    Json(Response {
-        status: "OK",
-        message: public_message.clone(),
-    })
+    match author.write_signed(false, &public_message.val, ""){
+        Ok(_) =>{
+            Json(Response {
+                status: "OK",
+                message: public_message.val.to_string().clone(),
+            })
+        },
+        Err(_e) =>{
+            Json(Response {
+                status: "Error",
+                message: "Not a valid Tag".to_string(),
+            })
+        },
+    }
 }
 
-#[get("/write_masked/<auth_key>/<masked_message>")]
-fn write_masked(auth_key:String, masked_message: String) -> Json<Response> {
+#[get("/write_masked/<masked_message>")]
+fn write_masked(masked_message: Tag) -> Json<Response> {
     let mut author: Channel = Channel::new("SOME9AUTHOR9SEED9SECRTE9A", "https://nodes.devnet.iota.org:443");
-    author.write_signed(true, "", &masked_message.clone());
-    Json(Response {
-        status: "OK",
-        message: masked_message.clone(),
-    })
+    match author.write_signed(true, "", &masked_message.val){
+        Ok(_) =>{
+            Json(Response {
+                status: "OK",
+                message: masked_message.val.to_string().clone(),
+            })
+        },
+        Err(_e) =>{
+            Json(Response {
+                status: "Error",
+                message: "Not a valid Tag".to_string(),
+            })
+        },
+    }
 }
 
-#[get("/write_tagged/<auth_key>/<tagged_message>")]
-fn write_tagged(auth_key:String, tagged_message: String) -> Json<Response> {
+#[get("/write_tagged/<tagged_message>")]
+fn write_tagged(tagged_message: Tag) -> Json<Response> {
     let mut author: Channel = Channel::new("SOME9AUTHOR9SEED9SECRTE9A", "https://nodes.devnet.iota.org:443");
-    author.write_tagged("", &tagged_message.clone());
-    Json(Response {
-        status: "OK",
-        message: tagged_message.clone(),
-    })
+    match author.write_tagged("", &tagged_message.val){
+        Ok(_) =>{
+            Json(Response {
+                status: "OK",
+                message: tagged_message.val.to_string().clone(),
+            })
+        },
+        Err(_e) =>{
+            Json(Response {
+                status: "Error",
+                message: "Not a valid Tag".to_string(),
+            })
+        },
+    }
 }
 
 
