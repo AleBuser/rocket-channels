@@ -1,6 +1,3 @@
-use rocket::Outcome;
-use rocket::http::Status;
-use rocket::request::{self, Request, FromRequest};
 use rocket::request::FromParam;
 use rocket::http::RawStr;
 
