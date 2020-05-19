@@ -21,7 +21,7 @@ impl<'r> FromParam<'r> for Tag<'r> {
             return Err(TagError::Invalid);
         }
 
-        if !(tag.chars().count() == 5usize){
+        if !(tag.chars().count() == 27usize){
             return Err(TagError::Invalid);
         }
 
