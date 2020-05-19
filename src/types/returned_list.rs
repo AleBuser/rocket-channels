@@ -1,8 +1,9 @@
 
 use serde_derive::Serialize;
 
+
 #[derive(Serialize, Debug)]
-pub struct Response {
+pub struct ReturnedList {
     pub status: &'static str,
-    pub message: String
+    pub list: Vec<String>
 }
