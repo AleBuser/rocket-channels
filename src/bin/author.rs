@@ -26,15 +26,15 @@ struct TagLists{
     tagged: Mutex<Vec<String>>,
 }
 
-#[get("/add_subscriber/<subscribe_tag>")]
+#[put("/add_subscriber/<subscribe_tag>")]
 fn add_subscriber(subscribe_tag: Tag, author: State<Mutex<Channel>>, _key: ApiKeySubscriber) -> Json<Response> {
     
     let mut author = author.lock().expect("lock author");
 
     match author.add_subscriber(subscribe_tag.val.to_string()) {
-        Ok(_) => Json(Response {
+        Ok(keyload) => Json(Response {
             status: "OK",
-            message: subscribe_tag.val.to_string().clone(),
+            message: keyload,
         }),
         Err(_e) => Json(Response {
             status: "Error",
@@ -43,7 +43,7 @@ fn add_subscriber(subscribe_tag: Tag, author: State<Mutex<Channel>>, _key: ApiKe
     }
 }
 
-#[get("/remove_subscriber/<unsubscribe_tag>")]
+#[delete("/remove_subscriber/<unsubscribe_tag>")]
 fn remove_subscriber(unsubscribe_tag: Tag, author: State<Mutex<Channel>>, _key: ApiKeySubscriber) -> Json<Response> {
     
     let mut author = author.lock().expect("lock author");
@@ -60,7 +60,7 @@ fn remove_subscriber(unsubscribe_tag: Tag, author: State<Mutex<Channel>>, _key: 
     }
 }
 
-#[get("/write_public/<public_message>")]
+#[post("/write_public/<public_message>")]
 fn write_public(public_message: String, author: State<Mutex<Channel>>, list: State<TagLists>, _key: ApiKeyAuthor) -> Json<Response> {
     
     let mut author = author.lock().expect("lock author");
@@ -81,7 +81,7 @@ fn write_public(public_message: String, author: State<Mutex<Channel>>, list: Sta
     }
 }
 
-#[get("/write_masked/<masked_message>")]
+#[post("/write_masked/<masked_message>")]
 fn write_masked(masked_message: String, author: State<Mutex<Channel>>, list: State<TagLists>, _key: ApiKeyAuthor) -> Json<Response> {
     
     let mut author = author.lock().expect("lock author");
@@ -102,7 +102,7 @@ fn write_masked(masked_message: String, author: State<Mutex<Channel>>, list: Sta
     }
 }
 
-#[get("/write_tagged/<tagged_message>")]
+#[post("/write_tagged/<tagged_message>")]
 fn write_tagged(tagged_message: String, author: State<Mutex<Channel>>, list: State<TagLists>, _key: ApiKeyAuthor) -> Json<Response> {
 
     let mut author = author.lock().expect("lock author");
