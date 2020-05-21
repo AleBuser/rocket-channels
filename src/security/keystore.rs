@@ -1,23 +1,24 @@
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
+use crypto::digest::Digest;
+use crypto::sha1::Sha1;
 
 #[derive(Debug)]
 pub struct Keystore {
-    pub api_key_subscriber: u64,
-    pub api_key_author: u64,
+    pub api_key_subscriber: String,
+    pub api_key_author: String,
 }
 
 impl Keystore {
     pub fn new(new_key_sub: String, new_key_aut: String) -> Keystore {
         Keystore {
-            api_key_subscriber: calculate_hash(&new_key_sub),
-            api_key_author: calculate_hash(&new_key_aut),
+            api_key_subscriber: calculate_hash(new_key_sub),
+            api_key_author: calculate_hash(new_key_aut),
         }
     }
 }
 
-fn calculate_hash<T: Hash>(t: &T) -> u64 {
-    let mut s = DefaultHasher::new();
-    t.hash(&mut s);
-    s.finish()
+pub fn calculate_hash(t: String) -> String {
+    let mut hasher = Sha1::new();
+    hasher.input_str(&t);
+    let hex = hasher.result_str();
+    hex
 }

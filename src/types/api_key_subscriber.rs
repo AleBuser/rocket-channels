@@ -3,16 +3,15 @@ use rocket::request::{self, FromRequest, Request};
 use rocket::Outcome;
 use rocket::State;
 
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
 
+use crate::security::keystore::calculate_hash;
 use crate::security::keystore::Keystore;
 
 pub struct ApiKeySubscriber(String);
 
 /// Returns true if `key` is a valid API key string.
-fn is_valid(key: &str, hash: u64) -> bool {
-    calculate_hash(&key.to_string()) == hash
+fn is_valid(key: &str, hash: String) -> bool {
+    calculate_hash(key.to_string()) == hash
 }
 
 #[derive(Debug)]
@@ -28,7 +27,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for ApiKeySubscriber {
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
         let keys: Vec<_> = request.headers().get("x-api-key").collect();
         let store = request.guard::<State<Keystore>>().unwrap();
-        let hash = store.api_key_subscriber;
+        let hash = store.api_key_subscriber.clone();
         match keys.len() {
             0 => Outcome::Failure((Status::BadRequest, ApiKeyError::Missing)),
             1 if is_valid(keys[0], hash) => Outcome::Success(ApiKeySubscriber(keys[0].to_string())),
@@ -36,10 +35,4 @@ impl<'a, 'r> FromRequest<'a, 'r> for ApiKeySubscriber {
             _ => Outcome::Failure((Status::BadRequest, ApiKeyError::BadCount)),
         }
     }
-}
-
-fn calculate_hash<T: Hash>(t: &T) -> u64 {
-    let mut s = DefaultHasher::new();
-    t.hash(&mut s);
-    s.finish()
 }
