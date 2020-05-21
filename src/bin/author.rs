@@ -32,10 +32,13 @@ fn add_subscriber(subscribe_tag: Tag, author: State<Mutex<Channel>>, _key: ApiKe
     let mut author = author.lock().expect("lock author");
 
     match author.add_subscriber(subscribe_tag.val.to_string()) {
-        Ok(keyload) => Json(Response {
-            status: "OK",
-            message: keyload,
-        }),
+        Ok(keyload) => {
+            println!("added subscriber and generated keyload: {}", keyload);
+            Json(Response {
+                status: "OK",
+                message: keyload,
+            })
+        },
         Err(_e) => Json(Response {
             status: "Error",
             message: "Not a valid Tag".to_string(),
@@ -156,7 +159,7 @@ fn get_masked_list(list: State<TagLists>, _key: ApiKeySubscriber) -> Json<Return
 fn main() {
     //Open Channel
     let author: Mutex<Channel> =Mutex::new(Channel::new(
-        "SOME9AUTHOR9SEED9SECRTE9A",
+        "SOME9AUTHOR9SEED9SECRTE9P",
         "https://nodes.devnet.iota.org:443",
     ));
     let (channel_address, announcement_tag) = author.lock().expect("").open().unwrap();

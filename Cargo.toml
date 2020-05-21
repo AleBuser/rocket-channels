@@ -22,7 +22,7 @@ path = "src/bin/subscriber.rs"
 
 [dependencies]
 rocket = "0.4.4"
-channels_lite = { git= "https://github.com/AleBuser/iota-channels-lite"}
+channels_lite = { git = "https://github.com/AleBuser/iota-channels-lite"}
 iota-lib-rs = "0.4.1"
 serde = "1.0.110"
 serde_derive = "1.0.110"
@@ -30,6 +30,7 @@ serde_json = "1.0.53"
 reqwest = "0.10.4"
 tokio-core = "0.1.17"
 tokio = {version = "0.2.18", features = ["macros"]}
+rust-crypto = "0.2.36"
 
 
 [dependencies.rocket_contrib]

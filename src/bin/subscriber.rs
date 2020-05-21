@@ -8,6 +8,8 @@ use serde::de;
 use reqwest;
 use reqwest::Url;
 
+use std::{thread, time};
+
 use serde_json::{Result, Value};
 
 use channels_lite::channels::channel_subscriber::Channel;
@@ -22,10 +24,10 @@ impl Subscriber {
     pub fn new() -> Subscriber {
 
         let subscriber: Channel = Channel::new(
-            "SOME9SUBSCRIBER9SEED",
+            "SOME9SUBSCRIBER9SEEDO",
             "https://nodes.devnet.iota.org:443",
-            "QSUIACTIMIPJYBJ9GYAXKZGVSUGHUBFKPWKIPUKMSNKRPQZCGTUGJVGWZCKXBKRTCMJQQXZE9UYWDCTKF".to_string(),
-            "NFAIQDKVSWUAXIYMJXJPRFN9ZDD".to_string()
+            "JVCZXFSMUQDCQSVZSJNWFXSZJDVZDQTPGYCNGLBNWJT9WLNJVFTUBWZPHTWPW9CHTBTQLQHDEBGNCNIMV".to_string(),
+            "TPXHHKQSSZBODORLUNLJXGFULJE".to_string()
         );
         Self {
             api_key: "API_SUB".to_string(),
@@ -104,7 +106,7 @@ impl Subscriber {
         Ok(masked_list)
     }
 
-    async fn connect(&mut self, tag: String) -> Result<String>  {
+    async fn share_subscription(&mut self, tag: String) -> Result<String>  {
 
         let client = reqwest::Client::new();
 
@@ -123,9 +125,10 @@ impl Subscriber {
 
         let tag = ret["message"].as_str().unwrap().to_string();
         
-        println!("{:?}",&tag);
-
         self.channel_subscriber.update_keyload(tag.clone()).unwrap();
+        
+        println!("Updated keyload to {:?}",&tag);
+        
         Ok(tag)
 
     }
@@ -143,7 +146,7 @@ impl Subscriber {
             }
         }
         
-        println!("messages: {:?}",&msg_list);
+        println!("messages tagged : {:?}",&msg_list);
         Ok(msg_list)
     }
 
@@ -160,7 +163,7 @@ impl Subscriber {
             }
         }
         
-        println!("messages: {:?}",&msg_list);
+        println!("messages public: {:?}",&msg_list);
         Ok(msg_list)
     }
 
@@ -172,12 +175,12 @@ impl Subscriber {
 
         for tag in tag_list{
             let msgs = self.channel_subscriber.read_signed(tag).unwrap();
-            for (msg_p,_msg_m) in msgs{
-                msg_list.push(msg_p);
+            for (_msg_p,msg_m) in msgs{
+                msg_list.push(msg_m);
             }
         }
         
-        println!("messages: {:?}",&msg_list);
+        println!("messages masked: {:?}",&msg_list);
         Ok(msg_list)
     }
 }
@@ -188,7 +191,10 @@ async fn main() {
 
     let subscription_tag: String = sub.channel_subscriber.connect().unwrap();
 
-    sub.connect(subscription_tag).await.unwrap();
+    thread::sleep(time::Duration::from_secs(10*2));
+
+    sub.share_subscription(subscription_tag).await.unwrap();
+
 
     sub.read_public().await.unwrap();
     sub.read_masked().await.unwrap();
