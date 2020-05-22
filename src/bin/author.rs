@@ -72,6 +72,7 @@ fn write_public(public_message: String, author: State<Mutex<Channel>>, list: Sta
     match author.write_signed(false, &public_message, "") {
         Ok(public_message_tag) => {
             list.signed_public.lock().expect("lock list data").push(public_message_tag.clone());
+            println!("sent public message with tag: {}", public_message_tag);
             Json(Response {
                 status: "OK",
                 message: "Message sent to Tangle".to_string(),
@@ -92,6 +93,7 @@ fn write_masked(masked_message: String, author: State<Mutex<Channel>>, list: Sta
     match author.write_signed(true, "", &masked_message) {
         Ok(masked_message_tag) => {
             list.signed_masked.lock().expect("lock list data").push(masked_message_tag.clone());
+            println!("sent masked message with tag: {}", masked_message_tag);
             Json(Response {
                 status: "OK",
                 message: "Message sent to Tangle".to_string(),
@@ -113,6 +115,7 @@ fn write_tagged(tagged_message: String, author: State<Mutex<Channel>>, list: Sta
     match author.write_tagged("", &tagged_message) {
         Ok(tagget_packet_tag) => {
             list.tagged.lock().expect("lock list data").push(tagget_packet_tag.clone());
+            println!("sent tagged message with tag: {}", tagget_packet_tag);
             Json(Response {
                 status: "OK",
                 message: "Message sent to Tangle".to_string(),
@@ -159,7 +162,7 @@ fn get_masked_list(list: State<TagLists>, _key: ApiKeySubscriber) -> Json<Return
 fn main() {
     //Open Channel
     let author: Mutex<Channel> =Mutex::new(Channel::new(
-        "SOME9AUTHOR9SEED9SECRTE9P",
+        "SOME9AUTHOR9SEED9SECRTE9LIO",
         "https://nodes.devnet.iota.org:443",
     ));
     let (channel_address, announcement_tag) = author.lock().expect("").open().unwrap();

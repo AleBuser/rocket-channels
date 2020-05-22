@@ -26,8 +26,8 @@ impl Subscriber {
         let subscriber: Channel = Channel::new(
             "SOME9SUBSCRIBER9SEEDO",
             "https://nodes.devnet.iota.org:443",
-            "JVCZXFSMUQDCQSVZSJNWFXSZJDVZDQTPGYCNGLBNWJT9WLNJVFTUBWZPHTWPW9CHTBTQLQHDEBGNCNIMV".to_string(),
-            "TPXHHKQSSZBODORLUNLJXGFULJE".to_string()
+            "NAIOZPAAMOYKRVHYFZAREUQEWPBGVLXGXLHAVNGQZNNTFUGYRRUUYZNRSLTUICWGTTYGRNULHTUCKHFMI".to_string(),
+            "IGGOUMQPKRVHMDPMRAD9LLKVPQB".to_string()
         );
         Self {
             api_key: "API_SUB".to_string(),
@@ -195,8 +195,25 @@ async fn main() {
 
     sub.share_subscription(subscription_tag).await.unwrap();
 
+    //give author time to publish some msg
+    thread::sleep(time::Duration::from_secs(50));
+
 
     sub.read_public().await.unwrap();
     sub.read_masked().await.unwrap();
-    sub.read_tagged().await.unwrap();
+
+    //give author time to publish some msg
+    thread::sleep(time::Duration::from_secs(50));
+
+    sub.read_public().await.unwrap();
+    sub.read_masked().await.unwrap();
+
+    //give author time to publish some msg
+    thread::sleep(time::Duration::from_secs(50));
+
+    sub.read_public().await.unwrap();
+    sub.read_masked().await.unwrap();
+
+
+
 }
