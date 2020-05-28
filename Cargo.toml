@@ -11,13 +11,17 @@ edition = "2018"
 name = "local"
 path = "src/lib.rs"
 
-[[bin]] # Bin to run the HelloWorld gRPC server
-name = "author"
-path = "src/bin/author.rs"
+[[bin]] 
+name = "author_server"
+path = "src/bin/server/author_server.rs"
 
-[[bin]] # Bin to run the HelloWorld gRPC client
+[[bin]] 
 name = "subscriber"
-path = "src/bin/subscriber.rs"
+path = "src/bin/clients/subscriber.rs"
+
+[[bin]] 
+name = "author"
+path = "src/bin/clients/author.rs"
 
 
 [dependencies]

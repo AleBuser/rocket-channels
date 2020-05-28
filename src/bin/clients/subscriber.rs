@@ -13,6 +13,7 @@ use std::{thread, time};
 use serde_json::{Result, Value};
 
 use channels_lite::channels::channel_subscriber::Channel;
+use channels_lite::utils::response_write_signed::ResponseSigned;
 
 pub struct Subscriber {
     api_key: String,
@@ -20,13 +21,13 @@ pub struct Subscriber {
 }
 
 impl Subscriber {
-    pub fn new() -> Subscriber {
+    pub fn new() -> Self {
         let subscriber: Channel = Channel::new(
-            "SOME9SUBSCRIBER9SEEDO",
             "https://nodes.devnet.iota.org:443",
-            "NAIOZPAAMOYKRVHYFZAREUQEWPBGVLXGXLHAVNGQZNNTFUGYRRUUYZNRSLTUICWGTTYGRNULHTUCKHFMI"
+            "ZOPJKISBGSGRJTTXDQLCTVVMDRNGOQGSZXSAXYUOYT9YUNG9IIMKZISNYTKGLSSBTIOS9MRVZAONRNZDB"
                 .to_string(),
-            "IGGOUMQPKRVHMDPMRAD9LLKVPQB".to_string(),
+            "N9A9FQZLRMMIJMDDAMQGXCPOUBE".to_string(),
+            None,
         );
         Self {
             api_key: "API_SUB".to_string(),
@@ -59,7 +60,7 @@ impl Subscriber {
         Ok(tagged_list)
     }
 
-    async fn get_public_list(&mut self) -> Result<Vec<String>> {
+    async fn get_public_list(&mut self) -> Result<Vec<(String, Option<String>)>> {
         let client = reqwest::Client::new();
 
         let body = &client
@@ -75,15 +76,18 @@ impl Subscriber {
 
         let ret: Value = serde_json::from_str(body).unwrap();
 
-        let mut public_list: Vec<String> = vec![];
+        let mut public_list: Vec<(String, Option<String>)> = vec![];
         let list = ret["list"].as_array().unwrap().clone();
         for t in &list {
-            public_list.push(t.as_str().unwrap().to_string());
+            let t: ResponseSigned = serde_json::from_str(t.as_str().unwrap()).unwrap();
+            let signed_message_tag = t.signed_message_tag;
+            let change_key_tag = t.change_key_tag;
+            public_list.push((signed_message_tag, change_key_tag));
         }
         Ok(public_list)
     }
 
-    async fn get_masked_list(&mut self) -> Result<Vec<String>> {
+    async fn get_masked_list(&mut self) -> Result<Vec<(String, Option<String>)>> {
         let client = reqwest::Client::new();
 
         let body = &client
@@ -99,10 +103,13 @@ impl Subscriber {
 
         let ret: Value = serde_json::from_str(body).unwrap();
 
-        let mut masked_list: Vec<String> = vec![];
+        let mut masked_list: Vec<(String, Option<String>)> = vec![];
         let list = ret["list"].as_array().unwrap().clone();
         for t in &list {
-            masked_list.push(t.as_str().unwrap().to_string());
+            let t: ResponseSigned = serde_json::from_str(t.as_str().unwrap()).unwrap();
+            let signed_message_tag = t.signed_message_tag;
+            let change_key_tag = t.change_key_tag;
+            masked_list.push((signed_message_tag, change_key_tag));
         }
         Ok(masked_list)
     }
@@ -155,14 +162,16 @@ impl Subscriber {
         Ok(msg_list)
     }
 
-    async fn read_public(&mut self) -> Result<Vec<String>> {
-        let tag_list: Vec<String> = self.get_public_list().await.unwrap();
+    async fn read_all_public(&mut self) -> Result<Vec<String>> {
+        let tag_list: Vec<(String, Option<String>)> = self.get_public_list().await.unwrap();
 
         let mut msg_list: Vec<String> = vec![];
 
-        for tag in tag_list {
-            let msgs: Vec<(Option<String>, Option<String>)> =
-                self.channel_subscriber.read_signed(tag).unwrap();
+        for (signed_message_tag, change_key_tag) in tag_list {
+            let msgs: Vec<(Option<String>, Option<String>)> = self
+                .channel_subscriber
+                .read_signed(signed_message_tag, change_key_tag)
+                .unwrap();
             for (msg_p, _msg_m) in msgs {
                 match msg_p {
                     None => continue,
@@ -175,14 +184,16 @@ impl Subscriber {
         Ok(msg_list)
     }
 
-    async fn read_masked(&mut self) -> Result<Vec<String>> {
-        let tag_list: Vec<String> = self.get_masked_list().await.unwrap();
+    async fn read_all_masked(&mut self) -> Result<Vec<String>> {
+        let tag_list: Vec<(String, Option<String>)> = self.get_masked_list().await.unwrap();
 
         let mut msg_list: Vec<String> = vec![];
 
-        for tag in tag_list {
-            let msgs: Vec<(Option<String>, Option<String>)> =
-                self.channel_subscriber.read_signed(tag).unwrap();
+        for (signed_message_tag, change_key_tag) in tag_list {
+            let msgs = self
+                .channel_subscriber
+                .read_signed(signed_message_tag, change_key_tag)
+                .unwrap();
             for (_msg_p, msg_m) in msgs {
                 match msg_m {
                     Some(message) => msg_list.push(message),
@@ -207,9 +218,9 @@ async fn main() {
 
     loop {
         //give author time to publish some msg
-        thread::sleep(time::Duration::from_secs(50));
+        thread::sleep(time::Duration::from_secs(5));
 
-        sub.read_public().await.unwrap();
-        sub.read_masked().await.unwrap();
+        sub.read_all_public().await.unwrap();
+        sub.read_all_masked().await.unwrap();
     }
 }

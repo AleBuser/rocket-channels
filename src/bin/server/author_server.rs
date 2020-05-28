@@ -8,7 +8,7 @@ extern crate channels_lite;
 use std::sync::Mutex;
 
 use channels_lite::channels::channel_author::Channel;
-use channels_lite::channels::payload::json::PayloadBuilder;
+use channels_lite::utils::payload::json::PayloadBuilder;
 use rocket_contrib::json::Json;
 
 use local::types::{
@@ -84,11 +84,12 @@ fn write_public(
             .build(),
     ) {
         Ok(public_message_tag) => {
+            let response = serde_json::to_string(&public_message_tag).unwrap();
             list.signed_public
                 .lock()
                 .expect("lock list data")
-                .push(public_message_tag.clone());
-            println!("sent public message with tag: {}", public_message_tag);
+                .push(response.clone());
+            println!("sent public message with tag: {}", response);
             Json(Response {
                 status: "OK",
                 message: "Message sent to Tangle".to_string(),
@@ -118,11 +119,12 @@ fn write_masked(
             .build(),
     ) {
         Ok(masked_message_tag) => {
+            let response = serde_json::to_string(&masked_message_tag).unwrap();
             list.signed_masked
                 .lock()
                 .expect("lock list data")
-                .push(masked_message_tag.clone());
-            println!("sent masked message with tag: {}", masked_message_tag);
+                .push(response.clone());
+            println!("sent masked message with tag: {}", response);
             Json(Response {
                 status: "OK",
                 message: "Message sent to Tangle".to_string(),
@@ -198,8 +200,8 @@ fn get_masked_list(list: State<TagLists>, _key: ApiKeySubscriber) -> Json<Return
 fn main() {
     //Open Channel
     let author: Mutex<Channel> = Mutex::new(Channel::new(
-        "SOME9AUTHOR9SEED9SECRTE9LIO",
         "https://nodes.devnet.iota.org:443",
+        Some("EVERVERVERVERAWQQQ".to_string()),
     ));
     let (channel_address, announcement_tag) = author.lock().expect("").open().unwrap();
     println!("Author: Announced channel");
