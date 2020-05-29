@@ -8,12 +8,14 @@ extern crate channels_lite;
 use std::sync::Mutex;
 
 use channels_lite::channels::channel_author::Channel;
+use channels_lite::channels::Network;
 use channels_lite::utils::payload::json::PayloadBuilder;
 use rocket_contrib::json::Json;
 
 use local::types::{
-    api_key_author::ApiKeyAuthor, api_key_subscriber::ApiKeySubscriber, response::Response,
-    returned_list::ReturnedList, tag::Tag,
+    api_key_author::ApiKeyAuthor, api_key_subscriber::ApiKeySubscriber,
+    response_announce::ResponseAnnounce, response_list::ResponseList,
+    response_message::ResponseMessage, tag::Tag,
 };
 
 use local::security::keystore::Keystore;
@@ -24,23 +26,31 @@ struct TagLists {
     tagged: Mutex<Vec<String>>,
 }
 
+struct ChannelAdress {
+    channel_address: Mutex<String>,
+}
+
+struct AnnouncementTag {
+    announcement_tag: Mutex<String>,
+}
+
 #[put("/add_subscriber/<subscribe_tag>")]
 fn add_subscriber(
     subscribe_tag: Tag,
     author: State<Mutex<Channel>>,
     _key: ApiKeySubscriber,
-) -> Json<Response> {
+) -> Json<ResponseMessage> {
     let mut author = author.lock().expect("lock author");
 
     match author.add_subscriber(subscribe_tag.val.to_string()) {
         Ok(keyload) => {
             println!("added subscriber and generated keyload: {}", keyload);
-            Json(Response {
+            Json(ResponseMessage {
                 status: "OK",
                 message: keyload,
             })
         }
-        Err(_e) => Json(Response {
+        Err(_e) => Json(ResponseMessage {
             status: "Error",
             message: "Not a valid Tag".to_string(),
         }),
@@ -52,15 +62,15 @@ fn remove_subscriber(
     unsubscribe_tag: Tag,
     author: State<Mutex<Channel>>,
     _key: ApiKeySubscriber,
-) -> Json<Response> {
+) -> Json<ResponseMessage> {
     let mut author = author.lock().expect("lock author");
 
     match author.remove_subscriber(unsubscribe_tag.val.to_string()) {
-        Ok(_) => Json(Response {
+        Ok(_) => Json(ResponseMessage {
             status: "OK",
             message: unsubscribe_tag.val.to_string().clone(),
         }),
-        Err(_e) => Json(Response {
+        Err(_e) => Json(ResponseMessage {
             status: "Error",
             message: "Not a valid Tag".to_string(),
         }),
@@ -73,7 +83,7 @@ fn write_public(
     author: State<Mutex<Channel>>,
     list: State<TagLists>,
     _key: ApiKeyAuthor,
-) -> Json<Response> {
+) -> Json<ResponseMessage> {
     let mut author = author.lock().expect("lock author");
 
     match author.write_signed(
@@ -90,12 +100,12 @@ fn write_public(
                 .expect("lock list data")
                 .push(response.clone());
             println!("sent public message with tag: {}", response);
-            Json(Response {
+            Json(ResponseMessage {
                 status: "OK",
                 message: "Message sent to Tangle".to_string(),
             })
         }
-        Err(_e) => Json(Response {
+        Err(_e) => Json(ResponseMessage {
             status: "Error",
             message: "Not a valid Tag".to_string(),
         }),
@@ -108,7 +118,7 @@ fn write_masked(
     author: State<Mutex<Channel>>,
     list: State<TagLists>,
     _key: ApiKeyAuthor,
-) -> Json<Response> {
+) -> Json<ResponseMessage> {
     let mut author = author.lock().expect("lock author");
 
     match author.write_signed(
@@ -125,12 +135,12 @@ fn write_masked(
                 .expect("lock list data")
                 .push(response.clone());
             println!("sent masked message with tag: {}", response);
-            Json(Response {
+            Json(ResponseMessage {
                 status: "OK",
                 message: "Message sent to Tangle".to_string(),
             })
         }
-        Err(_e) => Json(Response {
+        Err(_e) => Json(ResponseMessage {
             status: "Error",
             message: "Not a valid Tag".to_string(),
         }),
@@ -143,7 +153,7 @@ fn write_tagged(
     author: State<Mutex<Channel>>,
     list: State<TagLists>,
     _key: ApiKeyAuthor,
-) -> Json<Response> {
+) -> Json<ResponseMessage> {
     let mut author = author.lock().expect("lock author");
 
     match author.write_tagged(
@@ -158,12 +168,12 @@ fn write_tagged(
                 .expect("lock list data")
                 .push(tagget_packet_tag.clone());
             println!("sent tagged message with tag: {}", tagget_packet_tag);
-            Json(Response {
+            Json(ResponseMessage {
                 status: "OK",
                 message: "Message sent to Tangle".to_string(),
             })
         }
-        Err(_e) => Json(Response {
+        Err(_e) => Json(ResponseMessage {
             status: "Error",
             message: "Not a valid Tag".to_string(),
         }),
@@ -171,42 +181,68 @@ fn write_tagged(
 }
 
 #[get("/get_tagged_list")]
-fn get_tagged_list(list: State<TagLists>, _key: ApiKeySubscriber) -> Json<ReturnedList> {
+fn get_tagged_list(list: State<TagLists>, _key: ApiKeySubscriber) -> Json<ResponseList> {
     let tagged_list = list.tagged.lock().expect("lock list data").clone();
-    Json(ReturnedList {
+    Json(ResponseList {
         status: "OK",
         list: tagged_list,
     })
 }
 
 #[get("/get_public_list")]
-fn get_public_list(list: State<TagLists>, _key: ApiKeySubscriber) -> Json<ReturnedList> {
+fn get_public_list(list: State<TagLists>, _key: ApiKeySubscriber) -> Json<ResponseList> {
     let signed_public_list = list.signed_public.lock().expect("lock list data").clone();
-    Json(ReturnedList {
+    Json(ResponseList {
         status: "OK",
         list: signed_public_list,
     })
 }
 
 #[get("/get_masked_list")]
-fn get_masked_list(list: State<TagLists>, _key: ApiKeySubscriber) -> Json<ReturnedList> {
+fn get_masked_list(list: State<TagLists>, _key: ApiKeySubscriber) -> Json<ResponseList> {
     let signed_masked_list = list.signed_masked.lock().expect("lock list data").clone();
-    Json(ReturnedList {
+    Json(ResponseList {
         status: "OK",
         list: signed_masked_list,
     })
 }
 
+#[get("/get_announcement")]
+fn get_announcement(
+    channel_address: State<ChannelAdress>,
+    announcement_tag: State<AnnouncementTag>,
+    _key: ApiKeySubscriber,
+) -> Json<ResponseAnnounce> {
+    Json(ResponseAnnounce {
+        status: "OK",
+        channel_address: channel_address
+            .channel_address
+            .lock()
+            .expect("lock list data")
+            .clone(),
+        announcement_tag: announcement_tag
+            .announcement_tag
+            .lock()
+            .expect("lock list data")
+            .clone(),
+    })
+}
+
 fn main() {
     //Open Channel
-    let author: Mutex<Channel> = Mutex::new(Channel::new(
-        "https://nodes.devnet.iota.org:443",
-        Some("EVERVERVERVERAWQQQ".to_string()),
-    ));
-    let (channel_address, announcement_tag) = author.lock().expect("").open().unwrap();
+    let author: Mutex<Channel> = Mutex::new(Channel::new(Network::Devnet, None));
+    let (x, y) = author.lock().expect("").open().unwrap();
     println!("Author: Announced channel");
-    println!("channel_address: {}", channel_address);
-    println!("announcement_tag: {}", announcement_tag);
+    println!("channel_address: {}", x);
+    println!("announcement_tag: {}", y);
+
+    let channel_address = ChannelAdress {
+        channel_address: Mutex::new(x),
+    };
+
+    let announcement_tag = AnnouncementTag {
+        announcement_tag: Mutex::new(y),
+    };
 
     let keystore = Keystore::new("API_SUB".to_string(), "API_AUT".to_string());
 
@@ -227,11 +263,14 @@ fn main() {
                 write_tagged,
                 get_tagged_list,
                 get_public_list,
-                get_masked_list
+                get_masked_list,
+                get_announcement,
             ],
         )
         .manage(author)
         .manage(keystore)
         .manage(tagstore)
+        .manage(channel_address)
+        .manage(announcement_tag)
         .launch();
 }

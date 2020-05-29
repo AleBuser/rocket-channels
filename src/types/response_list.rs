@@ -1,9 +1,8 @@
-
-use serde_derive::Serialize;
 use serde_derive::Deserialize;
+use serde_derive::Serialize;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ReturnedList{
+pub struct ResponseList {
     pub status: &'static str,
-    pub list: Vec<String>
+    pub list: Vec<String>,
 }

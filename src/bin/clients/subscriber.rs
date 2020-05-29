@@ -13,6 +13,7 @@ use std::{thread, time};
 use serde_json::{Result, Value};
 
 use channels_lite::channels::channel_subscriber::Channel;
+use channels_lite::channels::Network;
 use channels_lite::utils::response_write_signed::ResponseSigned;
 
 pub struct Subscriber {
@@ -20,15 +21,33 @@ pub struct Subscriber {
     channel_subscriber: Channel,
 }
 
+async fn get_announcement(api_key: String) -> Result<(String, String)> {
+    let client = reqwest::Client::new();
+
+    let body = &client
+        .get("http://0.0.0.0:8000/get_announcement")
+        .header("x-api-key", api_key)
+        .send()
+        .await
+        .unwrap()
+        .text()
+        .await
+        .unwrap()
+        .clone();
+
+    let ret: Value = serde_json::from_str(body).unwrap();
+
+    let channel_address = ret["channel_address"].as_str().unwrap().to_string();
+    let announcement_tag = ret["announcement_tag"].as_str().unwrap().to_string();
+
+    Ok((channel_address, announcement_tag))
+}
+
 impl Subscriber {
-    pub fn new() -> Self {
-        let subscriber: Channel = Channel::new(
-            "https://nodes.devnet.iota.org:443",
-            "ZOPJKISBGSGRJTTXDQLCTVVMDRNGOQGSZXSAXYUOYT9YUNG9IIMKZISNYTKGLSSBTIOS9MRVZAONRNZDB"
-                .to_string(),
-            "N9A9FQZLRMMIJMDDAMQGXCPOUBE".to_string(),
-            None,
-        );
+    pub async fn new(api_key: String, seed: Option<String>) -> Self {
+        let (channel_address, announcement_tag) = get_announcement(api_key).await.unwrap();
+        let subscriber: Channel =
+            Channel::new(Network::Devnet, channel_address, announcement_tag, seed);
         Self {
             api_key: "API_SUB".to_string(),
             channel_subscriber: subscriber,
@@ -142,7 +161,7 @@ impl Subscriber {
         Ok(tag)
     }
 
-    async fn read_tagged(&mut self) -> Result<Vec<String>> {
+    async fn read_all_tagged(&mut self) -> Result<Vec<String>> {
         let tag_list: Vec<String> = self.get_tagged_list().await.unwrap();
 
         let mut msg_list: Vec<String> = vec![];
@@ -158,7 +177,6 @@ impl Subscriber {
             }
         }
 
-        println!("messages tagged : {:?}", &msg_list);
         Ok(msg_list)
     }
 
@@ -180,7 +198,6 @@ impl Subscriber {
             }
         }
 
-        println!("messages public: {:?}", &msg_list);
         Ok(msg_list)
     }
 
@@ -202,13 +219,12 @@ impl Subscriber {
             }
         }
 
-        println!("messages masked: {:?}", &msg_list);
         Ok(msg_list)
     }
 }
 #[tokio::main]
 async fn main() {
-    let mut sub = Subscriber::new();
+    let mut sub = Subscriber::new("API_SUB".to_string(), None).await;
 
     let subscription_tag: String = sub.channel_subscriber.connect().unwrap();
 
@@ -216,11 +232,46 @@ async fn main() {
 
     sub.share_subscription(subscription_tag).await.unwrap();
 
+    let mut previous_public = String::default();
+    let mut previous_masked = String::default();
+    let mut previous_tagged = String::default();
+
     loop {
         //give author time to publish some msg
-        thread::sleep(time::Duration::from_secs(5));
+        thread::sleep(time::Duration::from_secs(10));
 
-        sub.read_all_public().await.unwrap();
-        sub.read_all_masked().await.unwrap();
+        let public_list = sub.read_all_public().await.unwrap();
+        let masked_list = sub.read_all_tagged().await.unwrap();
+        let tagged_list = sub.read_all_masked().await.unwrap();
+
+        match public_list.last() {
+            Some(last) => {
+                if last.to_string() != previous_public.clone() {
+                    println!("pub: {:?}", &last);
+                    previous_public = last.clone();
+                }
+            }
+            None => (),
+        }
+
+        match masked_list.last() {
+            Some(last) => {
+                if last.to_string() != previous_masked.clone() {
+                    println!("mskd: {:?}", &last);
+                    previous_masked = last.clone();
+                }
+            }
+            None => (),
+        }
+
+        match tagged_list.last() {
+            Some(last) => {
+                if last.to_string() != previous_tagged.clone() {
+                    println!("tgd: {:?}", &last);
+                    previous_tagged = last.clone();
+                }
+            }
+            None => (),
+        }
     }
 }
