@@ -1,19 +1,41 @@
 use crypto::digest::Digest;
 use crypto::sha1::Sha1;
+use jfs::Store;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+use std::fs::File;
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Keystore {
-    pub api_key_subscriber: String,
+    pub api_key_subscribers: Vec<String>,
     pub api_key_author: String,
 }
 
-impl Keystore {
-    pub fn new(new_key_sub: String, new_key_aut: String) -> Keystore {
-        Keystore {
-            api_key_subscriber: calculate_hash(new_key_sub),
-            api_key_author: calculate_hash(new_key_aut),
+#[derive(Debug)]
+pub struct KeyManager {
+    keystore: Keystore,
+}
+
+impl KeyManager {
+    pub fn new(new_key_aut: String, new_key_subscriber: Vec<String>) -> KeyManager {
+        KeyManager {
+            keystore: Keystore {
+                api_key_author: new_key_aut,
+                api_key_subscribers: new_key_subscriber,
+            },
         }
     }
+
+    pub fn add_subscriber(&mut self, new_key_subscriber: String) -> () {
+        self.keystore
+            .api_key_subscribers
+            .push(calculate_hash(new_key_subscriber));
+        store_keystore(&self.keystore)
+    }
+}
+
+pub fn store_keystore(k: &Keystore) -> () {
+    serde_json::to_writer(&File::create("keystore.json").unwrap(), k).unwrap();
 }
 
 pub fn calculate_hash(t: String) -> String {

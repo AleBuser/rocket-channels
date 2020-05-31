@@ -28,16 +28,16 @@ path = "src/bin/clients/author.rs"
 rocket = "0.4.4"
 channels_lite = { git = "https://github.com/iota-community/iota-channels-lite"}
 iota-lib-rs = "0.4.1"
-serde = "1.0.110"
+serde = {version="1.0.110", features = ["derive"] }
 serde_derive = "1.0.110"
 serde_json = "1.0.53"
 reqwest = "0.10.4"
 tokio-core = "0.1.17"
 tokio = {version = "0.2.18", features = ["macros"]}
 rust-crypto = "0.2.36"
-
+jfs = "0.6.2"
 
 [dependencies.rocket_contrib]
-version = "0.4.4"
+version = "0.4.5"
 default-features = false
 features = ["json","serve"]

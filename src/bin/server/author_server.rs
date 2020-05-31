@@ -4,6 +4,9 @@
 extern crate rocket;
 use rocket::State;
 extern crate channels_lite;
+extern crate jfs;
+extern crate rocket_contrib;
+extern crate serde_derive;
 
 use std::sync::Mutex;
 
@@ -15,7 +18,8 @@ use rocket_contrib::json::Json;
 use local::types::tag::Tag;
 
 use local::security::{
-    api_key_author::ApiKeyAuthor, api_key_subscriber::ApiKeySubscriber, keystore::Keystore,
+    api_key_author::ApiKeyAuthor, api_key_subscriber::ApiKeySubscriber, keystore::calculate_hash,
+    keystore::KeyManager,
 };
 
 use local::responses::{
@@ -247,7 +251,8 @@ fn main() {
         announcement_tag: Mutex::new(y),
     };
 
-    let keystore = Keystore::new("API_SUB".to_string(), "API_AUT".to_string());
+    let mut keystore = KeyManager::new(calculate_hash("API_AUT".to_string()), vec![]);
+    keystore.add_subscriber("API_SUB".to_string());
 
     let tagstore = TagLists {
         signed_public: Mutex::new(vec![]),

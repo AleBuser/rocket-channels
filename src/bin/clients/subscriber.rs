@@ -238,7 +238,7 @@ async fn main() {
 
     loop {
         //give author time to publish some msg
-        thread::sleep(time::Duration::from_secs(10));
+        thread::sleep(time::Duration::from_secs(25));
 
         let public_list = sub.read_all_public().await.unwrap();
         let masked_list = sub.read_all_tagged().await.unwrap();
