@@ -2,9 +2,10 @@ use rocket::http::Status;
 use rocket::request::{self, FromRequest, Request};
 use rocket::Outcome;
 use rocket::State;
+use std::sync::Mutex;
 
-use crate::security::keystore::Keystore;
 use crate::security::keystore::calculate_hash;
+use crate::security::keystore::KeyManager;
 
 pub struct ApiKeyAuthor(String);
 
@@ -25,8 +26,8 @@ impl<'a, 'r> FromRequest<'a, 'r> for ApiKeyAuthor {
 
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
         let keys: Vec<_> = request.headers().get("x-api-key").collect();
-        let store = request.guard::<State<Keystore>>().unwrap();
-        let hash = store.api_key_author.clone();
+        let store = request.guard::<State<Mutex<KeyManager>>>().unwrap();
+        let hash = store.lock().expect("").keystore.api_key_author.clone();
         match keys.len() {
             0 => Outcome::Failure((Status::BadRequest, ApiKeyError::Missing)),
             1 if is_valid(keys[0], hash) => Outcome::Success(ApiKeyAuthor(keys[0].to_string())),

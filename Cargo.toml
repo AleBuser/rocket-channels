@@ -35,7 +35,7 @@ reqwest = "0.10.4"
 tokio-core = "0.1.17"
 tokio = {version = "0.2.18", features = ["macros"]}
 rust-crypto = "0.2.36"
-jfs = "0.6.2"
+rand = "0.7.3"
 
 [dependencies.rocket_contrib]
 version = "0.4.5"

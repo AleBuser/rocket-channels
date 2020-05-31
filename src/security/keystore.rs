@@ -1,6 +1,5 @@
 use crypto::digest::Digest;
 use crypto::sha1::Sha1;
-use jfs::Store;
 use serde::{Deserialize, Serialize};
 
 use std::fs::File;
@@ -13,17 +12,22 @@ pub struct Keystore {
 
 #[derive(Debug)]
 pub struct KeyManager {
-    keystore: Keystore,
+    pub keystore: Keystore,
 }
 
 impl KeyManager {
     pub fn new(new_key_aut: String, new_key_subscriber: Vec<String>) -> KeyManager {
         KeyManager {
             keystore: Keystore {
-                api_key_author: new_key_aut,
                 api_key_subscribers: new_key_subscriber,
+                api_key_author: new_key_aut,
             },
         }
+    }
+
+    pub fn restore() -> KeyManager {
+        let rec: Keystore = serde_json::from_reader(File::open("keystore.json").unwrap()).unwrap();
+        KeyManager { keystore: rec }
     }
 
     pub fn add_subscriber(&mut self, new_key_subscriber: String) -> () {

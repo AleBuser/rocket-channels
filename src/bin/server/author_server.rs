@@ -4,7 +4,6 @@
 extern crate rocket;
 use rocket::State;
 extern crate channels_lite;
-extern crate jfs;
 extern crate rocket_contrib;
 extern crate serde_derive;
 
@@ -18,8 +17,8 @@ use rocket_contrib::json::Json;
 use local::types::tag::Tag;
 
 use local::security::{
-    api_key_author::ApiKeyAuthor, api_key_subscriber::ApiKeySubscriber, keystore::calculate_hash,
-    keystore::KeyManager,
+    api_key_author::ApiKeyAuthor, api_key_subscriber::ApiKeySubscriber, keystore::KeyManager,
+    random_key,
 };
 
 use local::responses::{
@@ -214,6 +213,20 @@ fn get_masked_list(list: State<TagLists>, _key: ApiKeySubscriber) -> Json<Respon
     })
 }
 
+#[get("/new_subscriber_key")]
+fn new_subscriber_key(
+    keystore: State<Mutex<KeyManager>>,
+    _key: ApiKeyAuthor,
+) -> Json<ResponseMessage> {
+    let key = random_key::new();
+    let mut keystore = keystore.lock().expect("lock keystore data");
+    keystore.add_subscriber(key.to_string());
+    Json(ResponseMessage {
+        status: "OK",
+        message: key.to_string(),
+    })
+}
+
 #[get("/get_announcement")]
 fn get_announcement(
     channel_address: State<ChannelAdress>,
@@ -251,8 +264,8 @@ fn main() {
         announcement_tag: Mutex::new(y),
     };
 
-    let mut keystore = KeyManager::new(calculate_hash("API_AUT".to_string()), vec![]);
-    keystore.add_subscriber("API_SUB".to_string());
+    //let mut keystore = KeyManager::new(calculate_hash("API_AUT".to_string()), vec![]);
+    let key_manager = Mutex::new(KeyManager::restore());
 
     let tagstore = TagLists {
         signed_public: Mutex::new(vec![]),
@@ -273,10 +286,11 @@ fn main() {
                 get_public_list,
                 get_masked_list,
                 get_announcement,
+                new_subscriber_key,
             ],
         )
         .manage(author)
-        .manage(keystore)
+        .manage(key_manager)
         .manage(tagstore)
         .manage(channel_address)
         .manage(announcement_tag)
