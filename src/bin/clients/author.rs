@@ -76,7 +76,7 @@ async fn main() {
     loop {
         let msg = format!("test public msg nr. {}", &c);
         author.write_pubic(msg.to_string()).await.unwrap();
-        thread::sleep(time::Duration::from_secs(10));
+        thread::sleep(time::Duration::from_secs(20));
 
         /*
         let msg = format!("test masked msg nr. {}", &c);

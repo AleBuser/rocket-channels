@@ -12,13 +12,16 @@ use channels_lite::channels::Network;
 use channels_lite::utils::payload::json::PayloadBuilder;
 use rocket_contrib::json::Json;
 
-use local::types::{
-    api_key_author::ApiKeyAuthor, api_key_subscriber::ApiKeySubscriber,
-    response_announce::ResponseAnnounce, response_list::ResponseList,
-    response_message::ResponseMessage, tag::Tag,
+use local::types::tag::Tag;
+
+use local::security::{
+    api_key_author::ApiKeyAuthor, api_key_subscriber::ApiKeySubscriber, keystore::Keystore,
 };
 
-use local::security::keystore::Keystore;
+use local::responses::{
+    response_announce::ResponseAnnounce, response_list::ResponseList,
+    response_message::ResponseMessage,
+};
 
 struct TagLists {
     signed_public: Mutex<Vec<String>>,
