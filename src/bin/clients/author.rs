@@ -1,25 +1,34 @@
 use reqwest;
 use reqwest::Url;
 
-use std::{thread, time};
-
+use handlebars::Handlebars;
+#[macro_use]
 use serde_json::Result;
+use serde_json::json;
+use std::{thread, time};
 
 pub struct Author {
     api_key: String,
+    base_url: Handlebars<'static>,
 }
 
 impl Author {
-    pub fn new() -> Self {
+    pub fn new(base_url: &str) -> Self {
+        let mut reg = Handlebars::new();
+        reg.register_template_string("base_url", base_url).unwrap();
         Self {
             api_key: "API_AUT".to_string(),
+            base_url: reg,
         }
     }
 
     async fn write_pubic(&mut self, msg: String) -> Result<()> {
         let client = reqwest::Client::new();
 
-        let url_par = "http://0.0.0.0:8000/write_public/".to_owned() + &msg;
+        let url_par = self
+            .base_url
+            .render("base_url", &json!({"method": "write_public", "msg":&msg}))
+            .unwrap();
 
         &client
             .post(Url::parse(&url_par).unwrap())
@@ -36,7 +45,10 @@ impl Author {
     async fn write_masked(&mut self, msg: String) -> Result<()> {
         let client = reqwest::Client::new();
 
-        let url_par = "http://0.0.0.0:8000/write_masked/".to_owned() + &msg;
+        let url_par = self
+            .base_url
+            .render("base_url", &json!({"method": "write_masked", "msg":&msg}))
+            .unwrap();
 
         &client
             .post(Url::parse(&url_par).unwrap())
@@ -53,7 +65,10 @@ impl Author {
     async fn write_tagged(&mut self, msg: String) -> Result<()> {
         let client = reqwest::Client::new();
 
-        let url_par = "http://0.0.0.0:8000/write_tagged/".to_owned() + &msg;
+        let url_par = self
+            .base_url
+            .render("base_url", &json!({"method": "write_tagged", "msg":&msg}))
+            .unwrap();
 
         &client
             .post(Url::parse(&url_par).unwrap())
@@ -70,7 +85,7 @@ impl Author {
 
 #[tokio::main]
 async fn main() {
-    let mut author = Author::new();
+    let mut author = Author::new("http://0.0.0.0:8000/{{method}}/{{msg}}");
 
     let mut c = 0u32;
     loop {
@@ -78,7 +93,7 @@ async fn main() {
         author.write_pubic(msg.to_string()).await.unwrap();
         thread::sleep(time::Duration::from_secs(20));
 
-        let msg = format!("test masked msg nr. {} -- also this is a veryy loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong message", &c);
+        let msg = format!("test masked msg nr. {}", &c);
         author.write_masked(msg.to_string()).await.unwrap();
         thread::sleep(time::Duration::from_secs(10));
 

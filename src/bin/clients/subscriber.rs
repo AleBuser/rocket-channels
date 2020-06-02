@@ -46,12 +46,8 @@ async fn get_announcement(api_key: String) -> Result<(String, String)> {
 impl Subscriber {
     pub async fn new(api_key: String, seed: Option<String>) -> Self {
         let (channel_address, announcement_tag) = get_announcement(api_key).await.unwrap();
-        let subscriber: Channel = Channel::new(
-            Network::Custom("http://speedynode.ddns.net:14265", 14),
-            channel_address,
-            announcement_tag,
-            seed,
-        );
+        let subscriber: Channel =
+            Channel::new(Network::Devnet, channel_address, announcement_tag, seed);
         Self {
             api_key: "API_SUB".to_string(),
             channel_subscriber: subscriber,

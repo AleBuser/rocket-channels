@@ -2,6 +2,7 @@
 
 #[macro_use]
 extern crate rocket;
+extern crate handlebars;
 use rocket::State;
 extern crate channels_lite;
 extern crate rocket_contrib;
@@ -250,10 +251,7 @@ fn get_announcement(
 
 fn main() {
     //Open Channel
-    let author: Mutex<Channel> = Mutex::new(Channel::new(
-        Network::Custom("http://speedynode.ddns.net:14265", 14),
-        None,
-    ));
+    let author: Mutex<Channel> = Mutex::new(Channel::new(Network::Devnet, None));
     let (x, y) = author.lock().expect("").open().unwrap();
     println!("Author: Announced channel");
     println!("channel_address: {}", x);
