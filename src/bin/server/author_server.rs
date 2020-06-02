@@ -181,7 +181,7 @@ fn write_tagged(
         }
         Err(_e) => Json(ResponseMessage {
             status: "Error",
-            message: "Not a valid Tag".to_string(),
+            message: "Failed to write message".to_string(),
         }),
     }
 }
@@ -250,7 +250,10 @@ fn get_announcement(
 
 fn main() {
     //Open Channel
-    let author: Mutex<Channel> = Mutex::new(Channel::new(Network::Devnet, None));
+    let author: Mutex<Channel> = Mutex::new(Channel::new(
+        Network::Custom("http://speedynode.ddns.net:14265", 14),
+        None,
+    ));
     let (x, y) = author.lock().expect("").open().unwrap();
     println!("Author: Announced channel");
     println!("channel_address: {}", x);

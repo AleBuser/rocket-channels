@@ -78,15 +78,13 @@ async fn main() {
         author.write_pubic(msg.to_string()).await.unwrap();
         thread::sleep(time::Duration::from_secs(20));
 
-        /*
-        let msg = format!("test masked msg nr. {}", &c);
+        let msg = format!("test masked msg nr. {} -- also this is a veryy loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong message", &c);
         author.write_masked(msg.to_string()).await.unwrap();
         thread::sleep(time::Duration::from_secs(10));
 
         let msg = format!("test tagged msg nr. {}", &c);
-        author.write_masked(msg.to_string()).await.unwrap();
+        author.write_tagged(msg.to_string()).await.unwrap();
         thread::sleep(time::Duration::from_secs(10));
-        */
         c = &c + 1;
     }
 }
